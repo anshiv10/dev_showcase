@@ -1,0 +1,547 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Login | anSHIV, ERPNext Developer</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,400;12..96,600;12..96,800&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+{% raw %}
+:root{
+  --ink:#0E1726; --ink-2:#132036; --grid:#18253A;
+  --paper:#F4F6F9; --control:#E8ECF1; --text:#1B2433; --muted:#5B6678;
+  --on-ink:#DCE4EF; --on-ink-muted:#8A98AE;
+  --amber:#E8A33D; --green:#2E9E6A; --red:#D1495B; --sky:#7FB2E5;
+  --display:'Bricolage Grotesque',ui-sans-serif,system-ui,-apple-system,'Segoe UI',sans-serif;
+  --mono:'IBM Plex Mono',ui-monospace,SFMono-Regular,Menlo,monospace;
+}
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+html,body{min-height:100%}
+body{
+  font-family:var(--display);color:var(--on-ink);background-color:var(--ink);
+  background-image:linear-gradient(var(--grid) 1px,transparent 1px),linear-gradient(90deg,var(--grid) 1px,transparent 1px);
+  background-size:32px 32px;background-position:-1px -1px;overflow-x:hidden;
+}
+a{color:inherit}
+:focus-visible{outline:2px solid var(--amber);outline-offset:3px;border-radius:4px}
+
+/* Background: a small DocType schema with live link lines */
+.schema{position:fixed;inset:0;width:100%;height:100%;pointer-events:none;z-index:0;opacity:0;animation:fade 1.4s .2s forwards}
+.schema rect{fill:var(--ink-2);stroke:#2A3B57;stroke-width:1}
+.schema .t{fill:#6B7FA3;font:500 12px var(--mono)}
+.schema .f{fill:#40526F;font:400 11px var(--mono)}
+.schema path{fill:none;stroke:#2F4466;stroke-width:1.2;stroke-dasharray:4 6;animation:flow 2.4s linear infinite}
+@keyframes flow{to{stroke-dashoffset:-20}}
+
+/* Layout */
+.page{
+  position:relative;z-index:1;min-height:100vh;max-width:1180px;margin:0 auto;
+  display:grid;grid-template-columns:minmax(0,1.2fr) minmax(320px,420px);
+  gap:clamp(32px,6vw,96px);align-items:center;
+  padding:clamp(28px,5vw,64px) clamp(20px,4vw,40px);
+}
+
+/* Intro */
+.intro{max-width:620px}
+.hello{font-size:17px;color:var(--on-ink-muted);margin-bottom:8px}
+.name{font-size:clamp(48px,8vw,104px);font-weight:800;line-height:.92;letter-spacing:-.045em;color:var(--paper);font-variation-settings:"opsz" 96}
+.name .word{display:inline-block;white-space:nowrap}
+.name .word span{display:inline-block;opacity:0;transform:translateY(.35em);animation:up .6s cubic-bezier(.2,.8,.2,1) forwards}
+.role{margin-top:18px;font-size:clamp(18px,2vw,22px);font-weight:600;color:var(--on-ink)}
+.lead{margin-top:10px;max-width:46ch;font-size:16px;line-height:1.6;color:var(--on-ink-muted)}
+.fade{opacity:0;animation:fade .8s ease forwards}
+.d1{animation-delay:.5s}.d2{animation-delay:.7s}.d3{animation-delay:.95s}.d4{animation-delay:1.2s}
+@keyframes fade{to{opacity:1}}
+@keyframes up{to{opacity:1;transform:none}}
+
+/* Terminal */
+.term{margin-top:30px;background:#0A111D;border:1px solid #24344F;border-radius:10px;overflow:hidden;box-shadow:0 24px 60px -30px #000;transition:border-color .3s}
+.term:hover{border-color:#3A5075}
+.term-bar{display:flex;align-items:center;gap:8px;padding:10px 14px;border-bottom:1px solid #1C2A40;font:500 12px var(--mono);color:var(--on-ink-muted)}
+.term-bar i{width:10px;height:10px;border-radius:50%;background:#2A3B57}
+.term-bar span{margin-left:6px}
+.replay{margin-left:auto;background:none;border:1px solid #2A3B57;color:var(--on-ink-muted);font:500 12px var(--mono);padding:4px 10px;border-radius:6px;cursor:pointer;transition:color .2s,border-color .2s,background .2s}
+.replay:hover{color:var(--ink);background:var(--amber);border-color:var(--amber)}
+.term-body{padding:16px 18px 18px;font:400 13.5px/1.75 var(--mono);color:#B9C6D8;min-height:236px}
+.line{display:block;white-space:pre-wrap;word-break:break-word;border-radius:4px;padding:0 6px;margin:0 -6px;transition:background .2s}
+.line:hover{background:#132036}
+.line.o{color:var(--on-ink-muted)}
+.line.res{color:#CFE3D6}
+.p{color:var(--amber)} .kw{color:var(--sky)} .str{color:#9AD1A8}
+.cursor{display:inline-block;width:.6em;height:1.1em;background:var(--amber);vertical-align:-.2em;animation:blink 1s steps(1) infinite}
+@keyframes blink{50%{opacity:0}}
+
+/* Profile links */
+.links{display:flex;flex-wrap:wrap;gap:10px 24px;margin-top:22px;font-size:15px}
+.links a{text-decoration:none;color:var(--on-ink);padding-bottom:3px;background:linear-gradient(var(--amber),var(--amber)) left bottom/0 2px no-repeat;transition:background-size .3s,color .2s}
+.links a:hover{background-size:100% 2px;color:var(--paper)}
+
+/* Login panel with flip to reset password */
+.panel{opacity:0;transform:translateY(24px);animation:up .8s .4s cubic-bezier(.2,.8,.2,1) forwards}
+.stage{perspective:1600px}
+.flipper{display:grid;transform-style:preserve-3d;transition:transform .7s cubic-bezier(.4,.1,.2,1)}
+.flipper.flipped{transform:rotateY(180deg)}
+.face{
+  grid-area:1/1;position:relative;backface-visibility:hidden;-webkit-backface-visibility:hidden;
+  background:var(--paper);color:var(--text);border-radius:12px;padding:28px 28px 22px;
+  box-shadow:0 30px 70px -30px rgba(0,0,0,.75);
+}
+.face.back{transform:rotateY(180deg)}
+.flipper:not(.flipped) .back,.flipper.flipped .front{pointer-events:none}
+
+.form-head{display:flex;align-items:center;justify-content:space-between;gap:12px;padding-bottom:16px;margin-bottom:20px;border-bottom:1px solid #DDE2E9}
+.form-head h2{font-size:22px;font-weight:700;letter-spacing:-.01em}
+
+/* Status pill, styled like an ERPNext document status */
+.pill{display:inline-flex;align-items:center;gap:6px;font-size:12.5px;font-weight:600;padding:4px 10px;border-radius:999px;background:#E3E8EF;color:var(--muted);transition:background .3s,color .3s}
+.pill::before{content:"";width:6px;height:6px;border-radius:50%;background:currentColor}
+.pill[data-state="dirty"]{background:#FCEBD2;color:#A5670F}
+.pill[data-state="saving"]{background:#DDE9F7;color:#2F6DB0}
+.pill[data-state="done"]{background:#D6F0E3;color:#1F7A50}
+.pill[data-state="error"]{background:#F8DDE1;color:#A8283B}
+.pill.bump{animation:bump .4s}
+@keyframes bump{50%{transform:scale(1.12)}}
+
+.note{font-size:14px;color:var(--muted);line-height:1.5;margin-bottom:16px}
+.field{margin-bottom:16px}
+.field label{display:block;font-size:13px;font-weight:600;color:var(--muted);margin-bottom:6px;transition:color .2s}
+.field:focus-within label{color:var(--text)}
+.control{position:relative}
+.control input{
+  width:100%;height:42px;padding:0 12px;font:inherit;font-size:15px;color:var(--text);
+  background:var(--control);border:1px solid transparent;border-radius:8px;outline:none;
+  transition:background .2s,border-color .2s,box-shadow .2s;
+}
+.control input:hover{background:#DFE4EB}
+.control input:focus{background:#fff;border-color:#9FB3CC;box-shadow:0 0 0 3px rgba(232,163,61,.3)}
+.control input:-webkit-autofill{-webkit-box-shadow:0 0 0 40px var(--control) inset;-webkit-text-fill-color:var(--text)}
+.control input.has-eye{padding-right:44px}
+.eye{position:absolute;right:6px;top:50%;transform:translateY(-50%);width:32px;height:32px;display:grid;place-items:center;border:0;background:none;color:var(--muted);border-radius:6px;cursor:pointer;transition:background .2s,color .2s}
+.eye:hover{background:#D7DDE5;color:var(--text)}
+.eye svg{width:18px;height:18px;fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
+.eye .slash{opacity:0;transition:opacity .2s}
+.eye.on .slash{opacity:1}
+
+.hint{display:flex;justify-content:space-between;align-items:center;gap:12px;font-size:13px;margin:-4px 0 18px;min-height:18px}
+.caps{color:#A5670F;opacity:0;transition:opacity .2s}
+.caps.show{opacity:1}
+.textlink{color:var(--text);text-decoration:none;font-size:13px;padding-bottom:1px;background:linear-gradient(var(--amber),var(--amber)) left bottom/0 2px no-repeat;transition:background-size .25s,color .2s}
+.textlink:hover{background-size:100% 2px;color:#A5670F}
+
+/* Buttons */
+.btn{
+  position:relative;width:100%;height:44px;display:flex;align-items:center;justify-content:center;gap:10px;
+  border:0;border-radius:8px;background:var(--text);color:#fff;font:inherit;font-size:15px;font-weight:600;
+  cursor:pointer;overflow:hidden;transition:background .25s,transform .15s,box-shadow .25s;
+}
+.btn:not(:disabled):hover{background:#0B111C;box-shadow:0 10px 24px -12px rgba(14,23,38,.9)}
+.btn:not(:disabled):active{transform:scale(.985)}
+.btn:disabled{cursor:progress}
+.btn .label,.btn kbd{position:relative;z-index:1}
+.btn kbd{font:500 11.5px var(--mono);padding:2px 6px;border-radius:4px;background:rgba(255,255,255,.14);color:#C9D3E0;transition:background .2s,color .2s}
+.btn:not(:disabled):hover kbd{background:var(--amber);color:var(--ink)}
+.btn .bar{position:absolute;left:0;bottom:0;height:3px;width:100%;background:var(--amber);transform:scaleX(0);transform-origin:left}
+.btn.saving .bar{transform:scaleX(.85);transition:transform 2.2s cubic-bezier(.1,.7,.2,1)}
+.btn.done{background:var(--green)}
+.btn.done .bar{transform:scaleX(1);background:#8FE0B5;transition:transform .25s}
+.ripple{position:absolute;border-radius:50%;background:rgba(255,255,255,.28);transform:scale(0);animation:ripple .65s ease-out forwards;pointer-events:none}
+@keyframes ripple{to{transform:scale(1);opacity:0}}
+.shake{animation:shake .4s}
+@keyframes shake{20%,60%{transform:translateX(-6px)}40%,80%{transform:translateX(6px)}}
+
+.msg{min-height:20px;margin-top:12px;font-size:13.5px;line-height:1.45;color:#A8283B}
+.msg.is-ok{color:#1F7A50}
+.foot{margin-top:16px;padding-top:14px;border-top:1px solid #DDE2E9;font-size:12.5px;color:var(--muted)}
+
+body.leaving .page{animation:leave .6s ease forwards}
+@keyframes leave{to{opacity:0;transform:scale(.985)}}
+
+@media (max-width:900px){
+  .page{grid-template-columns:1fr;align-items:start}
+  .term,.schema{display:none}
+  .name{font-size:clamp(44px,13vw,72px)}
+}
+@media (prefers-reduced-motion:reduce){
+  *,*::before,*::after{animation-duration:.01ms!important;animation-delay:0s!important;animation-iteration-count:1!important;transition-duration:.01ms!important}
+}
+{% endraw %}
+</style>
+</head>
+<body data-site="{{ site | e }}" data-redirect="{{ redirect_to | e }}">
+
+<svg class="schema" viewBox="0 0 1440 900" preserveAspectRatio="xMidYMid slice" aria-hidden="true">
+  <path d="M210 122 C 600 40, 800 40, 1180 102"/>
+  <path d="M1255 134 C 1300 400, 1260 500, 1305 760"/>
+  <path d="M1230 792 C 900 870, 500 870, 220 792"/>
+  <path d="M145 760 C 100 500, 180 400, 135 154"/>
+  <g transform="translate(60 90)"><rect width="150" height="64" rx="6"/><text class="t" x="12" y="24">Customer</text><text class="f" x="12" y="46">customer_name</text></g>
+  <g transform="translate(1180 70)"><rect width="150" height="64" rx="6"/><text class="t" x="12" y="24">Sales Order</text><text class="f" x="12" y="46">customer</text></g>
+  <g transform="translate(1230 760)"><rect width="150" height="64" rx="6"/><text class="t" x="12" y="24">Item</text><text class="f" x="12" y="46">item_code</text></g>
+  <g transform="translate(70 760)"><rect width="150" height="64" rx="6"/><text class="t" x="12" y="24">Sales Invoice</text><text class="f" x="12" y="46">sales_order</text></g>
+</svg>
+
+<div class="page">
+  <section class="intro">
+    <p class="hello fade">Hi, I am</p>
+    <h1 class="name" id="name" aria-label="anSHIV">anSHIV</h1>
+    <p class="role fade d1">ERPNext and Frappe developer</p>
+    <p class="lead fade d2">I build custom apps, integrations and workflows that fit how a business really runs. This is my local ERPNext workspace.</p>
+
+    <div class="term fade d3">
+      <div class="term-bar"><i></i><i></i><i></i><span>~/frappe-bench</span><button class="replay" id="replay" type="button">Replay</button></div>
+      <div class="term-body" id="term" aria-hidden="true"></div>
+    </div>
+
+    <nav class="links fade d4" aria-label="My profiles">
+      <a href="https://github.com/anSHIV10" target="_blank" rel="noopener">GitHub</a>
+      <a href="https://www.linkedin.com/in/anSHIV10" target="_blank" rel="noopener">LinkedIn</a>
+      <a href="mailto:dixitanshiv123@gmail.com">Email me</a>
+    </nav>
+  </section>
+
+  <section class="panel">
+    <div class="stage">
+      <div class="flipper" id="flipper">
+
+        <form class="face front" id="loginForm" novalidate>
+          <div class="form-head">
+            <h2>Sign in</h2>
+            <span class="pill" id="pill" data-state="idle">Guest</span>
+          </div>
+          <div class="field">
+            <label for="usr">Email or username</label>
+            <div class="control"><input id="usr" name="usr" type="text" autocomplete="username" autocapitalize="off" spellcheck="false" required></div>
+          </div>
+          <div class="field">
+            <label for="pwd">Password</label>
+            <div class="control">
+              <input id="pwd" name="pwd" type="password" class="has-eye" autocomplete="current-password" required>
+              <button type="button" class="eye" id="eye" aria-label="Show password" aria-pressed="false">
+                <svg viewBox="0 0 24 24"><path d="M2 12s3.6-7 10-7 10 7 10 7-3.6 7-10 7S2 12 2 12z"/><circle cx="12" cy="12" r="3"/><line class="slash" x1="4" y1="4" x2="20" y2="20"/></svg>
+              </button>
+            </div>
+          </div>
+          <div class="hint">
+            <span class="caps" id="caps">Caps Lock is on</span>
+            <a href="#forgot" class="textlink" id="toForgot">Forgot password?</a>
+          </div>
+          <button class="btn" id="loginBtn" type="submit"><span class="label">Sign in</span><kbd id="kbd">Ctrl + S</kbd><span class="bar"></span></button>
+          <p class="msg" id="loginMsg" role="status" aria-live="polite"></p>
+          <p class="foot">Built on Frappe Framework and ERPNext.</p>
+        </form>
+
+        <form class="face back" id="forgotForm" novalidate inert>
+          <div class="form-head">
+            <h2>Reset password</h2>
+            <a href="#" class="textlink" id="toLogin">Back to sign in</a>
+          </div>
+          <p class="note">Enter your account email. We will send a reset link to it.</p>
+          <div class="field">
+            <label for="fEmail">Email</label>
+            <div class="control"><input id="fEmail" name="email" type="email" autocomplete="email" required></div>
+          </div>
+          <button class="btn" id="forgotBtn" type="submit"><span class="label">Send reset link</span><span class="bar"></span></button>
+          <p class="msg" id="forgotMsg" role="status" aria-live="polite"></p>
+        </form>
+
+      </div>
+    </div>
+  </section>
+</div>
+
+<script>
+{% raw %}
+(function () {
+  'use strict';
+  var reduce = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+  var body = document.body;
+  var site = body.dataset.site || 'your-site';
+
+  function safePath(p) {
+    return (typeof p === 'string' && p.charAt(0) === '/' && p.charAt(1) !== '/' && p.charAt(1) !== '\\') ? p : null;
+  }
+  var redirectTo = safePath(body.dataset.redirect);
+
+  /* 1. Name reveal, letter by letter */
+  var nameEl = document.getElementById('name');
+  var words = nameEl.textContent.trim().split(/\s+/);
+  var n = 0;
+  nameEl.textContent = '';
+  words.forEach(function (w, wi) {
+    var ws = document.createElement('span');
+    ws.className = 'word';
+    ws.setAttribute('aria-hidden', 'true');
+    w.split('').forEach(function (ch) {
+      var s = document.createElement('span');
+      s.textContent = ch;
+      s.style.animationDelay = (n++ * 0.035) + 's';
+      ws.appendChild(s);
+    });
+    nameEl.appendChild(ws);
+    if (wi < words.length - 1) nameEl.appendChild(document.createTextNode(' '));
+  });
+
+  /* 2. Terminal demo. Edit these lines to show your own work. */
+  var script = [
+    { t: 'cmd', s: 'bench start' },
+    { t: 'out', s: 'web.1     | * Running on http://127.0.0.1:8000' },
+    { t: 'out', s: 'worker.1  | Worker ready' },
+    { t: 'cmd', s: 'bench --site ' + site + ' console' },
+    { t: 'in',  s: 'dev = frappe.get_doc("Developer", "anSHIV")' },
+    { t: 'in',  s: 'dev.skills' },
+    { t: 'res', s: '["Custom apps", "DocTypes", "Server scripts", "REST APIs", "Print formats"]' },
+    { t: 'in',  s: 'dev.status' },
+    { t: 'res', s: '"Open to new ERPNext projects"' }
+  ];
+  var term = document.getElementById('term');
+  var timers = [];
+
+  function esc(s) { return s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;'); }
+  function paint(s) { return esc(s).replace(/"[^"]*"/g, function (m) { return '<span class="str">' + m + '</span>'; }); }
+  function prefix(t) { return t === 'cmd' ? '<span class="p">$ </span>' : t === 'in' ? '<span class="kw">&gt;&gt;&gt; </span>' : ''; }
+  function later(fn, ms) { timers.push(setTimeout(fn, ms)); }
+
+  function runTerminal() {
+    timers.forEach(clearTimeout);
+    timers = [];
+    term.innerHTML = '';
+    var cursor = document.createElement('span');
+    cursor.className = 'cursor';
+    var i = 0;
+
+    function next() {
+      if (i >= script.length) {
+        var end = document.createElement('span');
+        end.className = 'line';
+        end.innerHTML = prefix('in');
+        end.appendChild(cursor);
+        term.appendChild(end);
+        return;
+      }
+      var item = script[i++];
+      var line = document.createElement('span');
+      line.className = 'line' + (item.t === 'out' ? ' o' : item.t === 'res' ? ' res' : '');
+      term.appendChild(line);
+
+      if (item.t === 'cmd' || item.t === 'in') {
+        if (reduce) { line.innerHTML = prefix(item.t) + paint(item.s); later(next, 40); return; }
+        var c = 0;
+        (function type() {
+          line.innerHTML = prefix(item.t) + paint(item.s.slice(0, c));
+          line.appendChild(cursor);
+          if (c < item.s.length) { c++; later(type, 24 + Math.random() * 40); }
+          else { later(next, 380); }
+        })();
+      } else {
+        line.innerHTML = paint(item.s);
+        later(next, item.t === 'out' ? 160 : 500);
+      }
+    }
+    later(next, reduce ? 0 : 900);
+  }
+  runTerminal();
+  document.getElementById('replay').addEventListener('click', runTerminal);
+
+  /* 3. Helpers */
+  function post(url, data) {
+    return fetch(url, {
+      method: 'POST',
+      credentials: 'same-origin',
+      headers: { 'Accept': 'application/json', 'Content-Type': 'application/x-www-form-urlencoded; charset=UTF-8' },
+      body: new URLSearchParams(data)
+    }).then(function (res) {
+      return res.json().catch(function () { return {}; }).then(function (j) {
+        return { ok: res.ok, status: res.status, json: j };
+      });
+    });
+  }
+  function strip(s) { return new DOMParser().parseFromString(String(s), 'text/html').body.textContent.trim(); }
+  function serverText(j) {
+    try {
+      if (j._server_messages) {
+        var m = JSON.parse(JSON.parse(j._server_messages)[0]);
+        return strip(m.message || '');
+      }
+    } catch (err) { /* ignore */ }
+    return typeof j.message === 'string' ? strip(j.message) : '';
+  }
+  function say(el, text, ok) { el.textContent = text; el.classList.toggle('is-ok', !!ok); }
+  function setLabel(b, text) { b.querySelector('.label').textContent = text; }
+  function shake(el) {
+    if (reduce) return;
+    el.classList.remove('shake'); void el.offsetWidth; el.classList.add('shake');
+  }
+
+  /* 4. Login form */
+  var form = document.getElementById('loginForm');
+  var usr = document.getElementById('usr');
+  var pwd = document.getElementById('pwd');
+  var btn = document.getElementById('loginBtn');
+  var lmsg = document.getElementById('loginMsg');
+  var pill = document.getElementById('pill');
+  var pillText = { idle: 'Guest', dirty: 'Not saved', saving: 'Signing in', done: 'Signed in', error: 'Try again' };
+
+  function setPill(state) {
+    if (pill.dataset.state === state) return;
+    pill.dataset.state = state;
+    pill.textContent = pillText[state];
+    if (!reduce) { pill.classList.remove('bump'); void pill.offsetWidth; pill.classList.add('bump'); }
+  }
+  [usr, pwd].forEach(function (el) {
+    el.addEventListener('input', function () {
+      setPill(usr.value || pwd.value ? 'dirty' : 'idle');
+      say(lmsg, '');
+    });
+  });
+
+  var isMac = /Mac|iPhone|iPad/.test(navigator.platform || navigator.userAgent);
+  document.getElementById('kbd').textContent = isMac ? '\u2318 S' : 'Ctrl + S';
+
+  var eye = document.getElementById('eye');
+  eye.addEventListener('click', function () {
+    var show = pwd.type === 'password';
+    pwd.type = show ? 'text' : 'password';
+    eye.classList.toggle('on', show);
+    eye.setAttribute('aria-pressed', String(show));
+    eye.setAttribute('aria-label', show ? 'Hide password' : 'Show password');
+    pwd.focus();
+  });
+
+  var caps = document.getElementById('caps');
+  ['keydown', 'keyup'].forEach(function (ev) {
+    pwd.addEventListener(ev, function (e) {
+      if (e.getModifierState) caps.classList.toggle('show', e.getModifierState('CapsLock'));
+    });
+  });
+  pwd.addEventListener('blur', function () { caps.classList.remove('show'); });
+
+  function failLogin(text) {
+    btn.disabled = false;
+    btn.classList.remove('saving');
+    setLabel(btn, 'Sign in');
+    setPill('error');
+    say(lmsg, text);
+    shake(btn);
+    pwd.select();
+  }
+
+  form.addEventListener('submit', function (e) {
+    e.preventDefault();
+    if (btn.disabled) return;
+    var u = usr.value.trim();
+    var p = pwd.value;
+    if (!u || !p) {
+      say(lmsg, !u ? 'Enter your email or username.' : 'Enter your password.');
+      (!u ? usr : pwd).focus();
+      shake(btn);
+      return;
+    }
+    btn.disabled = true;
+    btn.classList.add('saving');
+    setLabel(btn, 'Signing in');
+    setPill('saving');
+    say(lmsg, '');
+
+    post('/api/method/login', { usr: u, pwd: p }).then(function (r) {
+      var j = r.json || {};
+      if (r.ok && !j.verification) {
+        btn.classList.remove('saving');
+        btn.classList.add('done');
+        setLabel(btn, 'Signed in');
+        setPill('done');
+        say(lmsg, 'Welcome back' + (j.full_name ? ', ' + j.full_name : '') + '. Opening your desk.', true);
+        var dest = safePath(j.redirect_to) || redirectTo || safePath(j.home_page) || '/app';
+        setTimeout(function () { body.classList.add('leaving'); }, 500);
+        setTimeout(function () { window.location.href = dest; }, reduce ? 300 : 1000);
+        return;
+      }
+      if (j.verification) return failLogin('Two-factor login is on for this account. This page does not handle the OTP step yet.');
+      if (r.status === 429) return failLogin('Too many attempts. Wait a minute, then try again.');
+      failLogin(serverText(j) || 'Email or password is incorrect.');
+    }).catch(function () {
+      failLogin('Cannot reach the server. Check that bench is running.');
+    });
+  });
+
+  /* 5. Flip between sign in and reset password */
+  var flipper = document.getElementById('flipper');
+  var ff = document.getElementById('forgotForm');
+  var fEmail = document.getElementById('fEmail');
+
+  function flip(toBack) {
+    flipper.classList.toggle('flipped', toBack);
+    form.inert = toBack;
+    ff.inert = !toBack;
+    if (toBack && !fEmail.value && usr.value.indexOf('@') > -1) fEmail.value = usr.value.trim();
+    setTimeout(function () { (toBack ? fEmail : usr).focus(); }, reduce ? 0 : 450);
+  }
+  document.getElementById('toForgot').addEventListener('click', function (e) { e.preventDefault(); flip(true); });
+  document.getElementById('toLogin').addEventListener('click', function (e) { e.preventDefault(); flip(false); });
+  if (window.location.hash === '#forgot') flip(true);
+
+  /* 6. Reset password form */
+  var fb = document.getElementById('forgotBtn');
+  var fm = document.getElementById('forgotMsg');
+  function resetForgotBtn() { fb.disabled = false; fb.classList.remove('saving'); setLabel(fb, 'Send reset link'); }
+
+  ff.addEventListener('submit', function (e) {
+    e.preventDefault();
+    if (fb.disabled) return;
+    var em = fEmail.value.trim();
+    if (!em) { say(fm, 'Enter your email.'); shake(fb); fEmail.focus(); return; }
+    fb.disabled = true;
+    fb.classList.add('saving');
+    setLabel(fb, 'Sending');
+    say(fm, '');
+
+    post('/api/method/frappe.core.doctype.user.user.reset_password', { user: em }).then(function (r) {
+      resetForgotBtn();
+      if (r.ok && r.json.message !== 'not found') {
+        fb.classList.add('done');
+        setLabel(fb, 'Link sent');
+        say(fm, 'Reset link sent. Check your inbox.', true);
+        setTimeout(function () { fb.classList.remove('done'); setLabel(fb, 'Send reset link'); }, 2500);
+      } else if (r.status === 404 || r.json.message === 'not found') {
+        say(fm, 'No account uses this email. Check it and try again.');
+        shake(fb);
+      } else {
+        say(fm, serverText(r.json) || 'Could not send the link. Try again.');
+        shake(fb);
+      }
+    }).catch(function () {
+      resetForgotBtn();
+      say(fm, 'Cannot reach the server. Check that bench is running.');
+    });
+  });
+
+  /* 7. Ctrl/Cmd + S submits the visible form, like saving in ERPNext */
+  document.addEventListener('keydown', function (e) {
+    if ((e.metaKey || e.ctrlKey) && e.key && e.key.toLowerCase() === 's') {
+      e.preventDefault();
+      var target = flipper.classList.contains('flipped') ? ff : form;
+      if (target.requestSubmit) target.requestSubmit(); else target.dispatchEvent(new Event('submit', { cancelable: true }));
+    }
+  });
+
+  /* 8. Ripple on button press */
+  document.querySelectorAll('.btn').forEach(function (b) {
+    b.addEventListener('pointerdown', function (e) {
+      if (reduce || b.disabled) return;
+      var r = b.getBoundingClientRect();
+      var s = Math.max(r.width, r.height) * 1.2;
+      var sp = document.createElement('span');
+      sp.className = 'ripple';
+      sp.style.width = sp.style.height = s + 'px';
+      sp.style.left = (e.clientX - r.left - s / 2) + 'px';
+      sp.style.top = (e.clientY - r.top - s / 2) + 'px';
+      b.appendChild(sp);
+      setTimeout(function () { sp.remove(); }, 650);
+    });
+  });
+})();
+{% endraw %}
+</script>
+</body>
+</html>
